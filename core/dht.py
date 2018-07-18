@@ -1,7 +1,6 @@
-import hashlib
+import hashlib, os
 from core.storage.core import StorageEngine
 from socket import socket, AF_INET, SOCK_STREAM, gethostname
-import logging
 from threading import Thread
 
 DHT_PORT = 4567
@@ -10,7 +9,9 @@ class DHTNode:
 	def __init__(self, name):
 		self.name = name
 		self.id = self.__hash(name)
-		self.hostname = gethostname()
+		self.hostname = os.environ['HOSTNAME']
+
+		print ("Hostname: {}".format(self.hostname))
 
 		self.pred_port, self.succ_port = 0, 0
 
@@ -49,6 +50,8 @@ class DHTServerWorker(Thread):
 		self.sock.bind((gethostname(), DHT_PORT))
 
 		print ("Bound to {}".format(gethostname()))
+
+		self.dht = DHTNode(os.environ['HOSTNAME'])
 
 	def run(self):
 		self.sock.listen()
