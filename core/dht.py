@@ -10,12 +10,15 @@ class DHTNode:
 		self.name = name
 		self.id = self.__hash(name)
 		self.hostname = os.environ['HOSTNAME']
+		self.pred_hostname, self.succ_hostname = "", ""
+		self.storage = StorageEngine()
+		
+		self.__join_ring()
 
 		print ("Hostname: {}".format(self.hostname))
 
-		self.pred_port, self.succ_port = 0, 0
-
-		self.storage = StorageEngine()
+		print ("Pred_hostname: {} Succ_hostname: {}".format(self.pred_hostname,
+			self.succ_hostname))
 
 	def get(self, key):
 		if self.__isOwner(key):
@@ -30,6 +33,12 @@ class DHTNode:
 		else:
 			# forward to successor
 			pass
+
+	def __join_ring(self):
+		i_node = int(self.name.split("_")[1])
+
+		self.succ_hostname = "node_{}".format( ((i_node+1) % 5) )
+		self.pred_hostname = "node_{}".format( ((i_node-1) % 5) )
 
 	def __hash(self, key):
 		key = key.encode("utf-8")
@@ -65,8 +74,13 @@ class DHTServerWorker(Thread):
 class DHT:
 	def __init__(self):
 		self.master_name = "node_0"
-		self.master_id = hashlib.sha256(self.master_name.encode("utf-8")).hexdigest()
+		self.master_id = self.__hash(self.master_name)
+		self.master_hostname = "node_0"
 
 	def start(self):
 		self.server = DHTServerWorker()
 		self.server.start()
+
+	def __hash(self, key):
+		key = key.encode("utf-8")
+		return hashlib.sha256(key).hexdigest()
